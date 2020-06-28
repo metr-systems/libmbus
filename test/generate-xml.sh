@@ -43,45 +43,65 @@ if [ ! -x $mbus_parse_hex ]; then
     exit 3
 fi
 
-for hexfile in "$directory"/*.hex;  do
-    if [ ! -f "$hexfile" ]; then
-        continue
+generate_xml() {
+    directory="$1"
+    hexfile="$2"
+    mode="$3"
+
+    filename=$(basename "$hexfile" .hex)
+
+    if [ $mode = "normalized" ]; then
+        options="-n"
+        suffix="norm.xml"
+    else
+        options=""
+        suffix="xml"
     fi
 
-    filename=`basename $hexfile .hex`
-
     # Parse hex file and write XML in file
-    $mbus_parse_hex "$hexfile" > "$directory/$filename.xml.new"
+    $mbus_parse_hex $options "$hexfile" > "$directory/$filename.$suffix.new"
     result=$?
 
     # Check parsing result
     if [ $result -ne 0 ]; then
         echo "Unable to generate XML for $hexfile"
-        rm "$directory/$filename.xml.new"
-        continue
+        rm "$directory/$filename.$suffix.new"
+        return 1
     fi
 
     # Compare old XML with new XML and write in file
-    diff -u "$directory/$filename.xml" "$directory/$filename.xml.new" 2> /dev/null > "$directory/$filename.dif"
+    diff -u "$directory/$filename.$suffix" "$directory/$filename.$suffix.new" 2> /dev/null > "$directory/$filename.$suffix.dif"
     result=$?
 
     case "$result" in
         0)
              # XML equal -> remove new
-             rm "$directory/$filename.xml.new"
-             rm "$directory/$filename.dif"
+             rm "$directory/$filename.$suffix.new"
+             rm "$directory/$filename.$suffix.dif"
              ;;
         1)
              # different -> print diff
-             cat "$directory/$filename.dif" && rm "$directory/$filename.dif"
+             cat "$directory/$filename.$suffix.dif" && rm "$directory/$filename.$suffix.dif"
              echo ""
              ;;
         *)
              # no old -> rename XML
-             echo "Create $filename.xml"
-             mv "$directory/$filename.xml.new" "$directory/$filename.xml"
-             rm "$directory/$filename.dif"
+             echo "Create $filename.$suffix"
+             mv "$directory/$filename.$suffix.new" "$directory/$filename.$suffix"
+             rm "$directory/$filename.$suffix.dif"
              ;;
     esac
+
+    return $result
+}
+
+for hexfile in "$directory"/*.hex;  do
+    if [ ! -f "$hexfile" ]; then
+        continue
+    fi
+
+    generate_xml "$directory" "$hexfile" "default"
+
+    generate_xml "$directory" "$hexfile" "normalized"
 done
 

@@ -2388,6 +2388,11 @@ mbus_vib_unit_lookup(mbus_value_information_block *vib)
             // VIFE = E111 nnn Reserved
             snprintf(buff, sizeof(buff), "Reserved VIF extension");
         }
+        else if (vib->vife[0] == 0x3A)
+        {
+            // Unitless dimension (eg. Lansen Pulse Counter)
+            snprintf(buff, sizeof(buff), "Unitless Dimension");
+        }
         else
         {
             snprintf(buff, sizeof(buff), "Unrecognized VIF extension: 0x%.2x", vib->vife[0]);

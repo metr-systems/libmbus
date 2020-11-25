@@ -2413,7 +2413,7 @@ mbus_vib_unit_lookup(mbus_value_information_block *vib)
         return buff;
     }
 
-    if (vib->vife[0] == 0x3D) // gallons are currently not supported.
+    if (vib->vife[0] == 0x3C) // gallons are currently not supported.
     {
         snprintf(buff, sizeof(buff), "Reserved VIF extension");
         return buff;        
